@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二年级科学：小小科学家大冒险</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 100%);
+            user-select: none;
+        }
+        .bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .pulse-fast {
+            animation: pulse 0.8s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 顶部状态栏 -->
+    <div id="hud" class="hidden w-full max-w-4xl bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 mb-4 flex justify-between items-center border-b-4 border-blue-400">
+        <div class="flex items-center space-x-3">
+            <span class="bg-blue-500 text-white font-bold px-3 py-1 rounded-full text-sm" id="stage-badge">第 1 关</span>
+            <h2 class="font-bold text-gray-800 text-lg" id="stage-title">感官与分类闪电战</h2>
+        </div>
+        <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-1">
+                <span class="text-2xl">❤️</span>
+                <span id="lives-display" class="font-black text-xl text-red-500">3</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-2xl">⏱️</span>
+                <span id="timer-display" class="font-black text-xl text-orange-500">60s</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-2xl">⭐</span>
+                <span id="score-display" class="font-black text-xl text-yellow-500">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主游戏容器 -->
+    <div id="game-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-indigo-200 min-h-[520px] flex flex-col justify-between relative">
+        
+        <!-- 开始画面 -->
+        <div id="start-screen" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-blue-50 to-white">
+            <div class="text-6xl mb-4 animate-bounce">🔬🧪🚀</div>
+            <h1 class="text-4xl md:text-5xl font-black text-indigo-900 mb-3 tracking-wide">小小科学家大冒险</h1>
+            <p class="text-lg text-gray-600 mb-6 font-bold">二年级科学 · 单元一：科学技能（第3-5页特训）</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-2xl mb-8 text-left">
+                <div class="bg-green-100 p-3 rounded-xl border-2 border-green-300">
+                    <div class="text-2xl mb-1">👀🍎</div>
+                    <div class="font-bold text-green-800 text-sm">第一关：观察分类</div>
+                    <div class="text-xs text-green-600">五官与特征归类</div>
+                </div>
+                <div class="bg-blue-100 p-3 rounded-xl border-2 border-blue-300">
+                    <div class="text-2xl mb-1">📏🧪</div>
+                    <div class="font-bold text-blue-800 text-sm">第二关：精准测量</div>
+                    <div class="text-xs text-blue-600">单位与平行视线</div>
+                </div>
+                <div class="bg-purple-100 p-3 rounded-xl border-2 border-purple-300">
+                    <div class="text-2xl mb-1">🗣️💻</div>
+                    <div class="font-bold text-purple-800 text-sm">第三关：科学沟通</div>
+                    <div class="text-xs text-purple-600">四种表达方式</div>
+                </div>
+                <div class="bg-orange-100 p-3 rounded-xl border-2 border-orange-300">
+                    <div class="text-2xl mb-1">🧹🐸</div>
+                    <div class="font-bold text-orange-800 text-sm">第四关：操纵技能</div>
+                    <div class="text-xs text-orange-600">用具与标本处理</div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white font-black text-2xl px-12 py-4 rounded-full shadow-xl transform transition hover:scale-105 active:scale-95">
+                开始挑战！🔥
+            </button>
+        </div>
+
+        <!-- 动态关卡内容区 -->
+        <div id="stage-content" class="hidden flex-1 p-6 md:p-8 flex flex-col justify-between">
+            <!-- 由 JS 注入具体题目与交互界面 -->
+        </div>
+
+        <!-- 反馈提示浮层 -->
+        <div id="feedback-toast" class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full font-bold text-white shadow-lg text-lg z-50 transition-all">
+        </div>
+
+        <!-- 结束画面 -->
+        <div id="end-screen" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center bg-gradient-to-b from-yellow-50 to-white">
+            <div id="end-emoji" class="text-7xl mb-4">🏆</div>
+            <h2 id="end-title" class="text-4xl font-black text-indigo-900 mb-2">挑战成功！</h2>
+            <p id="end-subtitle" class="text-lg text-gray-600 mb-6">你已经掌握了所有的科学技能！</p>
+            <div class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-6 mb-8 w-full max-w-md">
+                <div class="text-sm text-indigo-600 font-bold mb-1">最终得分</div>
+                <div id="final-score" class="text-5xl font-black text-indigo-700">0</div>
+                <div id="rank-badge" class="mt-3 inline-block bg-yellow-400 text-yellow-900 font-black px-4 py-1 rounded-full text-sm">首席小小科学家</div>
+            </div>
+            <button onclick="startGame()" class="bg-green-500 hover:bg-green-600 text-white font-black text-xl px-10 py-3 rounded-full shadow-lg transform transition hover:scale-105">
+                再玩一次 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let score = 0;
+        let lives = 3;
+        let timeLeft = 90;
+        let timerInterval = null;
+        let currentStage = 1;
+        let subStep = 0;
+
+        // 题库数据（严格对应第3、4、5页教材内容）
+        const stage1Items = [
+            { name: "苹果", emoji: "🍎", category: "水果" },
+            { name: "西兰花", emoji: "🥦", category: "蔬菜" },
+            { name: "牛奶", emoji: "🥛", category: "饮料" },
+            { name: "香蕉", emoji: "🍌", category: "水果" },
+            { name: "包菜", emoji: "🥬", category: "蔬菜" },
+            { name: "罐装汽水", emoji: "🥫", category: "饮料" }
+        ];
+
+        const senseQuestions = [
+            { q: "想知道柠檬是酸的还是甜的，我们应该用什么感官？", options: ["👀 眼睛看", "👅 舌头尝", "👃 鼻子嗅", "👂 耳朵听"], ans: 1 },
+            { q: "想知道小猫的毛发是不是软软的，应该用什么感官？", options: ["✋ 用手摸", "👀 用眼睛看", "👂 用耳朵听", "👅 用舌头尝"], ans: 0 }
+        ];
+
+        const stage2Questions = [
+            {
+                type: "unit",
+                q: "测量【液体的体积】（例如一盒牛奶或量筒里的水），应该使用什么单位？",
+                options: ["米 (m) / 厘米 (cm)", "升 (l) / 毫升 (ml)", "公斤 (kg) / 克 (g)", "小时 (h) / 分钟 (min)"],
+                ans: 1
+            },
+            {
+                type: "unit",
+                q: "测量【质量】（例如学生的体重或书包的重量），应该使用什么单位？",
+                options: ["公斤 (kg) / 克 (g)", "升 (l) / 毫升 (ml)", "米 (m) / 厘米 (cm)", "分钟 (min) / 秒 (s)"],
+                ans: 0
+            },
+            {
+                type: "eye",
+                q: "用尺子测量物体长度，或用量筒测量水的体积时，眼睛的视线必须怎样？",
+                visual: "meniscus",
+                options: ["从高处往下斜看", "视线与刻度 / 水的弯月面平行", "从低处往上看", "闭上一只眼睛随便看"],
+                ans: 1
+            }
+        ];
+
+        const stage3Questions = [
+            {
+                scenario: "小华把绿豆发芽的过程画在科学笔记簿里。",
+                q: "这属于哪一种【沟通】方法？",
+                options: ["✍️ 书写", "🎨 绘图", "🗣️ 口述", "💻 信息与通信技术"],
+                ans: 1
+            },
+            {
+                scenario: "老师让同学们在班上大声说出观察到的实验结果。",
+                q: "这属于哪一种【沟通】方法？",
+                options: ["✍️ 书写", "🎨 绘图", "🗣️ 口述", "💻 信息与通信技术"],
+                ans: 2
+            },
+            {
+                scenario: "美美使用电脑制作图表，并通过电子邮件把报告发给老师。",
+                q: "这属于哪一种【沟通】方法？",
+                options: ["✍️ 书写", "🎨 绘图", "🗣️ 口述", "💻 信息与通信技术"],
+                ans: 3
+            }
+        ];
+
+        const stage4Questions = [
+            {
+                q: "实验结束后，烧杯和试管里还留有实验材料，正确的【操纵性技能】做法是？",
+                options: ["直接放回橱柜里", "正确地清洗科学用具后再存放", "留在桌子上等明天再用", "带回家自己玩"],
+                ans: 1
+            },
+            {
+                q: "我们在科学室观察完活生生的小蜗牛（标本）后，应该怎么做？",
+                options: ["把它放进书包带回家", "正确地处理标本（放回原处/大自然）", "把它丢进垃圾桶", "放在阳光下暴晒"],
+                ans: 1
+            },
+            {
+                q: "以下哪一项【不是】正确的操纵性技能？",
+                options: ["正确地应用和处理科学用具和材料", "正确地画出标本、科学用具和材料", "在科学室里用玻璃量筒敲打玩耍", "正确地存放科学用具和材料"],
+                ans: 2
+            }
+        ];
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            timeLeft = 120;
+            currentStage = 1;
+            subStep = 0;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('stage-content').classList.remove('hidden');
+
+            updateHUD();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateHUD();
+                if (timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+
+            renderStage();
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('lives-display').innerText = lives;
+            const timerEl = document.getElementById('timer-display');
+            timerEl.innerText = timeLeft + 's';
+            if (timeLeft <= 15) {
+                timerEl.classList.add('pulse-fast', 'text-red-600');
+            } else {
+                timerEl.classList.remove('pulse-fast', 'text-red-600');
+            }
+        }
+
+        function showToast(msg, isSuccess) {
+            const toast = document.getElementById('feedback-toast');
+            toast.innerText = msg;
+            toast.className = `absolute bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full font-bold text-white shadow-xl text-lg z-50 bounce-in ${isSuccess ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 1300);
+        }
+
+        function handleWrong() {
+            lives--;
+            updateHUD();
+            const container = document.getElementById('game-container');
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 400);
+            showToast("❌ 答错啦！再仔细想想！", false);
+            if (lives <= 0) {
+                setTimeout(() => endGame(false), 600);
+            }
+        }
+
+        function handleCorrect(points = 100) {
+            score += points;
+            updateHUD();
+            showToast(`🎉 太棒了！+${points}分`, true);
+        }
+
+        function renderStage() {
+            const content = document.getElementById('stage-content');
+            const badge = document.getElementById('stage-badge');
+            const title = document.getElementById('stage-title');
+
+            if (currentStage === 1) {
+                badge.innerText = "第 1 关 / 4";
+                title.innerText = "观察与分类闪电战（第3页）";
+                
+                if (subStep < stage1Items.length) {
+                    const item = stage1Items[subStep];
+                    content.innerHTML = `
+                        <div class="text-center my-auto bounce-in">
+                            <p class="text-gray-500 font-bold mb-2">根据物体的特征进行分类 (${subStep + 1}/${stage1Items.length})</p>
+                            <div class="inline-block bg-yellow-100 border-4 border-yellow-300 rounded-3xl p-8 mb-6 shadow-md">
+                                <div class="text-8xl mb-3">${item.emoji}</div>
+                                <div class="text-3xl font-black text-gray-800">${item.name}</div>
+                            </div>
+                            <p class="text-xl font-bold text-indigo-900 mb-6">请把它归类到正确的组别：</p>
+                            <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto">
+                                <button onclick="checkStage1Sort('水果')" class="bg-red-500 hover:bg-red-600 text-white font-black text-2xl py-5 rounded-2xl shadow-lg transform transition hover:scale-105">🍎 水果</button>
+                                <button onclick="checkStage1Sort('蔬菜')" class="bg-green-500 hover:bg-green-600 text-white font-black text-2xl py-5 rounded-2xl shadow-lg transform transition hover:scale-105">🥬 蔬菜</button>
+                                <button onclick="checkStage1Sort('饮料')" class="bg-blue-500 hover:bg-blue-600 text-white font-black text-2xl py-5 rounded-2xl shadow-lg transform transition hover:scale-105">🥤 饮料</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const qIdx = subStep - stage1Items.length;
+                    if (qIdx < senseQuestions.length) {
+                        renderMultipleChoice(senseQuestions[qIdx], () => {
+                            subStep++;
+                            renderStage();
+                        });
+                    } else {
+                        currentStage = 2;
+                        subStep = 0;
+                        renderStage();
+                    }
+                }
+            } else if (currentStage === 2) {
+                badge.innerText = "第 2 关 / 4";
+                title.innerText = "精准测量实验室（第4页）";
+                if (subStep < stage2Questions.length) {
+                    renderMultipleChoice(stage2Questions[subStep], () => {
+                        subStep++;
+                        renderStage();
+                    });
+                } else {
+                    currentStage = 3;
+                    subStep = 0;
+                    renderStage();
+                }
+            } else if (currentStage === 3) {
+                badge.innerText = "第 3 关 / 4";
+                title.innerText = "科学沟通解码器（第5页）";
+                if (subStep < stage3Questions.length) {
+                    renderMultipleChoice(stage3Questions[subStep], () => {
+                        subStep++;
+                        renderStage();
+                    });
+                } else {
+                    currentStage = 4;
+                    subStep = 0;
+                    renderStage();
+                }
+            } else if (currentStage === 4) {
+                badge.innerText = "第 4 关 / 4";
+                title.innerText = "操纵性技能大挑战（第5页）";
+                if (subStep < stage4Questions.length) {
+                    renderMultipleChoice(stage4Questions[subStep], () => {
+                        subStep++;
+                        renderStage();
+                    });
+                } else {
+                    endGame(true);
+                }
+            }
+        }
+
+        function checkStage1Sort(chosen) {
+            const item = stage1Items[subStep];
+            if (chosen === item.category) {
+                handleCorrect(80);
+                subStep++;
+                renderStage();
+            } else {
+                handleWrong();
+            }
+        }
+
+        function renderMultipleChoice(qObj, onSuccess) {
+            const content = document.getElementById('stage-content');
+            let visualHTML = '';
+            
+            if (qObj.visual === 'meniscus') {
+                visualHTML = `
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-4 flex items-center justify-center space-x-6">
+                        <div class="text-center">
+                            <div class="w-16 h-28 border-4 border-gray-400 border-t-0 rounded-b-lg mx-auto relative bg-white overflow-hidden">
+                                <div class="absolute bottom-0 w-full h-16 bg-blue-300/70 border-t-4 border-blue-600 rounded-b"></div>
+                                <div class="absolute bottom-16 w-full border-t-2 border-dashed border-red-500"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 font-bold">量筒弯月面</span>
+                        </div>
+                        <div class="text-left text-sm text-gray-700 space-y-1">
+                            <p>👁️ <b>提示：</b>读取读数时，</p>
+                            <p>视线应该保持在什么位置？</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let scenarioHTML = qObj.scenario ? `<div class="bg-purple-100 text-purple-900 font-bold p-4 rounded-2xl mb-4 text-lg border-l-4 border-purple-500">📖 情境：${qObj.scenario}</div>` : '';
+
+            content.innerHTML = `
+                <div class="my-auto bounce-in">
+                    ${scenarioHTML}
+                    ${visualHTML}
+                    <h3 class="text-2xl md:text-3xl font-black text-gray-800 mb-6 leading-snug">${qObj.q}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${qObj.options.map((opt, idx) => `
+                            <button onclick="checkMC(${idx}, ${qObj.ans})" class="text-left bg-indigo-50 hover:bg-indigo-600 hover:text-white border-2 border-indigo-200 text-indigo-950 font-bold text-xl p-5 rounded-2xl shadow-sm transition transform hover:-translate-y-1">
+                                <span class="inline-block w-8 h-8 rounded-full bg-indigo-200 text-indigo-800 text-center leading-8 mr-3 font-black">${['A','B','C','D'][idx]}</span>
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            window.checkMC = function(selected, correct) {
+                if (selected === correct) {
+                    handleCorrect(120);
+                    onSuccess();
+                } else {
+                    handleWrong();
+                }
+            };
+        }
+
+        function endGame(isWin) {
+            clearInterval(timerInterval);
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('stage-content').classList.add('hidden');
+            const endScreen = document.getElementById('end-screen');
+            endScreen.classList.remove('hidden');
+
+            const timeBonus = isWin ? timeLeft * 5 : 0;
+            const total = score + timeBonus;
+
+            document.getElementById('end-emoji').innerText = isWin ? '🏆' : '💪';
+            document.getElementById('end-title').innerText = isWin ? '恭喜通关！太厉害了！' : '挑战结束！再接再厉！';
+            document.getElementById('end-subtitle').innerText = isWin 
+                ? `剩余时间奖励 +${timeBonus} 分！你完全掌握了第3-5页的科学技能！` 
+                : '差一点就成功了，复习一下课本第3-5页再来挑战吧！';
+            document.getElementById('final-score').innerText = total;
+
+            let rank = "实习小研究员";
+            if (total >= 1500) rank = "👑 超级科学小博士";
+            else if (total >= 1000) rank = "🥇 金牌小小科学家";
+            else if (total >= 500) rank = "🥈 科学探索小能手";
+            document.getElementById('rank-badge').innerText = rank;
+        }
+    </script>
+</body>
+</html>
